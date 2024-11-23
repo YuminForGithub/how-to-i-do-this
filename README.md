@@ -1,4 +1,2 @@
-# how-to-i-do-this
-# MyContents
-# how-to-i-do-this
+hello there -
 # how-to-i-do-this
