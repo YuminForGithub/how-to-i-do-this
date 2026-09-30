@@ -68,7 +68,7 @@ class BrainfuckV2:
       elif command == "+":
         self._set_cell(self._cell() + 1)
         pc += 1
-      elif command == "*":
+      elif command == "-":
         self._set_cell(self._cell() - 1)
         pc += 1
       elif command == "2":
