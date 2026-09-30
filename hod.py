@@ -22,11 +22,11 @@ import sys
 from collections.abc import Callable
 
 
-class BrainfuckV2Error(Exception):
+class BrainFireError(Exception):
   """Raised when a program is not valid Brainfuck v2."""
 
 
-class BrainfuckV2:
+class BrainFire:
   def __init__(self, input_reader: Callable[[], str] = input) -> None:
     self.input_reader = input_reader
     self.memory: list[int] = [0]
@@ -83,7 +83,7 @@ class BrainfuckV2:
       elif command == ".":
         value = self._cell()
         if not 0 <= value <= 127:
-          raise BrainfuckV2Error(
+          raise BrainFireError(
             f"cannot print non-ASCII value {value} at address {self.pointer}"
           )
         self.output.append(chr(value))
@@ -105,17 +105,17 @@ class BrainfuckV2:
         pc = end
       elif command == "%":
         if pc + 1 >= len(program) or program[pc + 1] != '"':
-          raise BrainfuckV2Error("`%` must be followed immediately by a quoted string")
+          raise BrainFireError("`%` must be followed immediately by a quoted string")
         text, end = self._read_quoted(program, pc + 1)
         self.output.append(text)
         pc = end
       elif command == "`":
         end = program.find("`", pc + 1)
         if end == -1:
-          raise BrainfuckV2Error("unterminated jump expression")
+          raise BrainFireError("unterminated jump expression")
         address = self._evaluate_expression(program[pc + 1:end])
         if address < 0:
-          raise BrainfuckV2Error("jump addresses cannot be negative")
+          raise BrainFireError("jump addresses cannot be negative")
         self.pointer = address
         self._ensure_cell(self.pointer)
         pc = end + 1
@@ -134,7 +134,7 @@ class BrainfuckV2:
         else:
           pc += 1
       else:
-        raise BrainfuckV2Error(f"unknown command {command!r} at character {pc}")
+        raise BrainFireError(f"unknown command {command!r} at character {pc}")
 
     return "".join(self.output)
 
@@ -157,7 +157,7 @@ class BrainfuckV2:
     try:
       return int(self.input_reader().strip())
     except ValueError as error:
-      raise BrainfuckV2Error("`@` requires an integer console input") from error
+      raise BrainFireError("`@` requires an integer console input") from error
 
   @staticmethod
   def _remove_comments(source: str) -> str:
@@ -175,7 +175,7 @@ class BrainfuckV2:
         kept.append(character)
 
     if in_comment:
-      raise BrainfuckV2Error("unterminated `$...$` comment")
+      raise BrainFireError("unterminated `$...$` comment")
     return "".join(kept)
 
   @staticmethod
@@ -193,26 +193,26 @@ class BrainfuckV2:
       elif not in_string and character in closing:
         opener = closing[character]
         if not stacks[opener]:
-          raise BrainfuckV2Error(f"unmatched {character!r} at character {index}")
+          raise BrainFireError(f"unmatched {character!r} at character {index}")
         start = stacks[opener].pop()
         pairs[start] = index
         pairs[index] = start
 
     if in_string:
-      raise BrainfuckV2Error("unterminated string")
+      raise BrainFireError("unterminated string")
     for opener, stack in stacks.items():
       if stack:
-        raise BrainfuckV2Error(f"unmatched {opener!r} at character {stack[-1]}")
+        raise BrainFireError(f"unmatched {opener!r} at character {stack[-1]}")
     return pairs
 
   @staticmethod
   def _read_quoted(program: str, start: int) -> tuple[str, int]:
     end = program.find('"', start + 1)
     if end == -1:
-      raise BrainfuckV2Error("unterminated string")
+      raise BrainFireError("unterminated string")
     text = program[start + 1:end]
     if any(ord(character) > 127 for character in text):
-      raise BrainfuckV2Error("strings must contain ASCII characters only")
+      raise BrainFireError("strings must contain ASCII characters only")
     return text, end + 1
 
   def _evaluate_expression(self, expression: str) -> int:
@@ -235,24 +235,24 @@ class BrainfuckV2:
         index += 1
       elif character == "2":
         if value is None:
-          raise BrainfuckV2Error("`2` in a jump must follow `^` or `|`")
+          raise BrainFireError("`2` in a jump must follow `^` or `|`")
         value *= 2
         index += 1
       else:
-        raise BrainfuckV2Error(
+        raise BrainFireError(
           f"invalid jump expression character {character!r} at character {index}"
         )
 
     if value is None:
-      raise BrainfuckV2Error("jump expression cannot be empty")
+      raise BrainFireError("jump expression cannot be empty")
     return value
 
 
 def main() -> None:
   source = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else input("Program: ")
   try:
-    output = BrainfuckV2().run(source)
-  except BrainfuckV2Error as error:
+    output = BrainFire().run(source)
+  except BrainFireError as error:
     print(f"Brainfuck v2 error: {error}", file=sys.stderr)
     raise SystemExit(1) from error
   print(output, end="")
